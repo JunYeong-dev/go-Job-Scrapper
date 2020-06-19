@@ -6,9 +6,20 @@ import (
 	"std/fmt"
 	"strconv"
 
+	// goquery - jquery처럼 css selector를 통해 원하는 요소를 쉽게 찾을 수 있게 도와줌
 	"github.com/PuerkitoBio/goquery"
 )
 
+// 취업 정보 struct
+type extractedJod struct {
+	id       string
+	title    string
+	location string
+	salay    string
+	summary  string
+}
+
+// 취업 정보를 가져올 base URL
 var baseURL string = "https://kr.indeed.com/jobs?q=python&limit=50"
 
 func main() {
@@ -24,6 +35,28 @@ func main() {
 func getPage(page int) {
 	pageURL := baseURL + "&start=" + strconv.Itoa(page*50)
 	fmt.Println("Requesting", pageURL)
+	res, err := http.Get(pageURL)
+	checkErr(err)
+	checkCode(res)
+
+	defer res.Body.Close()
+
+	doc, err := goquery.NewDocumentFromReader(res.Body)
+	checkErr(err)
+
+	// 취업 정보를 가져옴; 취업 정보 카드
+	searchCards := doc.Find(".jobsearch-SerpJobCard")
+
+	searchCards.Each(func(i int, card *goquery.Selection) {
+		// Attr - 데이터와 존재여부를 return
+		id, _ := card.Attr("data-jk")
+		fmt.Println(id)
+		// Find - 원하는 속성을 가져옴
+		title := card.Find(".title>a").Text()
+		fmt.Println(title)
+		location := card.Find(".sjcl").Text()
+		fmt.Println(location)
+	})
 }
 
 // 전체 페이지를 return 하는 함수
