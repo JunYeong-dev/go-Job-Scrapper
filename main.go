@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"std/fmt"
 	"strconv"
+	"strings"
 
 	// goquery - jquery처럼 css selector를 통해 원하는 요소를 쉽게 찾을 수 있게 도와줌
 	"github.com/PuerkitoBio/goquery"
@@ -50,12 +51,10 @@ func getPage(page int) {
 	searchCards.Each(func(i int, card *goquery.Selection) {
 		// Attr - 데이터와 존재여부를 return
 		id, _ := card.Attr("data-jk")
-		fmt.Println(id)
 		// Find - 원하는 속성을 가져옴
-		title := card.Find(".title>a").Text()
-		fmt.Println(title)
-		location := card.Find(".sjcl").Text()
-		fmt.Println(location)
+		title := cleanString(card.Find(".title>a").Text())
+		location := cleanString(card.Find(".sjcl").Text())
+		fmt.Println(id, title, location)
 	})
 }
 
@@ -90,4 +89,10 @@ func checkCode(res *http.Response) {
 	if res.StatusCode != 200 {
 		log.Fatalln("Request failed with Status:", res.StatusCode)
 	}
+}
+
+// 공백을 제거하고, 문자열의 배열로 만들어 준 후 다시 공백을 넣은 하나의 문자열로 만들어 return
+// ex) "hello      golang      unbelievable" -> "hello", "golang", "unbelievable" -> "hello golang unbelievable"
+func cleanString(str string) string {
+	return strings.Join(strings.Fields(strings.TrimSpace(str)), " ")
 }
