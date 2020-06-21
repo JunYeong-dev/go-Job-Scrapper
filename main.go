@@ -49,13 +49,26 @@ func getPage(page int) {
 	searchCards := doc.Find(".jobsearch-SerpJobCard")
 
 	searchCards.Each(func(i int, card *goquery.Selection) {
-		// Attr - 데이터와 존재여부를 return
-		id, _ := card.Attr("data-jk")
-		// Find - 원하는 속성을 가져옴
-		title := cleanString(card.Find(".title>a").Text())
-		location := cleanString(card.Find(".sjcl").Text())
-		fmt.Println(id, title, location)
+		extracteJod(card)
 	})
+}
+
+// 취업 정보 카드에서 해당하는 데이터 추출
+func extracteJod(card *goquery.Selection) {
+	// Attr - 데이터와 존재여부를 return
+	id, _ := card.Attr("data-jk")
+	// Find - 원하는 속성을 가져옴
+	title := cleanString(card.Find(".title>a").Text())
+	location := cleanString(card.Find(".sjcl").Text())
+	salary := cleanString(card.Find(".salaryText").Text())
+	summary := cleanString(card.Find(".summary").Text())
+	fmt.Println(id, title, location, salary, summary)
+}
+
+// 공백을 제거하고, 문자열의 배열로 만들어 준 후 다시 공백을 넣은 하나의 문자열로 만들어 return
+// ex) "hello      golang      unbelievable" -> "hello", "golang", "unbelievable" -> "hello golang unbelievable"
+func cleanString(str string) string {
+	return strings.Join(strings.Fields(strings.TrimSpace(str)), " ")
 }
 
 // 전체 페이지를 return 하는 함수
@@ -89,10 +102,4 @@ func checkCode(res *http.Response) {
 	if res.StatusCode != 200 {
 		log.Fatalln("Request failed with Status:", res.StatusCode)
 	}
-}
-
-// 공백을 제거하고, 문자열의 배열로 만들어 준 후 다시 공백을 넣은 하나의 문자열로 만들어 return
-// ex) "hello      golang      unbelievable" -> "hello", "golang", "unbelievable" -> "hello golang unbelievable"
-func cleanString(str string) string {
-	return strings.Join(strings.Fields(strings.TrimSpace(str)), " ")
 }
