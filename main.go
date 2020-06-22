@@ -16,7 +16,7 @@ type extractedJod struct {
 	id       string
 	title    string
 	location string
-	salay    string
+	salary   string
 	summary  string
 }
 
@@ -24,16 +24,18 @@ type extractedJod struct {
 var baseURL string = "https://kr.indeed.com/jobs?q=python&limit=50"
 
 func main() {
+	var jobs []extractedJod
 	totalPages := getPages()
-	fmt.Println(totalPages)
 	for i := 0; i < totalPages; i++ {
-		getPage(i)
+		extractedJods := getPage(i)
+		jobs = append(jobs, extractedJods...)
 	}
-
+	fmt.Println(jobs)
 }
 
 // 페이지에 해당하는 URL을 return 하는 함수
-func getPage(page int) {
+func getPage(page int) []extractedJod {
+	var jobs []extractedJod
 	pageURL := baseURL + "&start=" + strconv.Itoa(page*50)
 	fmt.Println("Requesting", pageURL)
 	res, err := http.Get(pageURL)
@@ -49,12 +51,14 @@ func getPage(page int) {
 	searchCards := doc.Find(".jobsearch-SerpJobCard")
 
 	searchCards.Each(func(i int, card *goquery.Selection) {
-		extracteJod(card)
+		job := extracteJod(card)
+		jobs = append(jobs, job)
 	})
+	return jobs
 }
 
 // 취업 정보 카드에서 해당하는 데이터 추출
-func extracteJod(card *goquery.Selection) {
+func extracteJod(card *goquery.Selection) extractedJod {
 	// Attr - 데이터와 존재여부를 return
 	id, _ := card.Attr("data-jk")
 	// Find - 원하는 속성을 가져옴
@@ -62,7 +66,12 @@ func extracteJod(card *goquery.Selection) {
 	location := cleanString(card.Find(".sjcl").Text())
 	salary := cleanString(card.Find(".salaryText").Text())
 	summary := cleanString(card.Find(".summary").Text())
-	fmt.Println(id, title, location, salary, summary)
+	return extractedJod{
+		id:       id,
+		title:    title,
+		location: location,
+		salary:   salary,
+		summary:  summary}
 }
 
 // 공백을 제거하고, 문자열의 배열로 만들어 준 후 다시 공백을 넣은 하나의 문자열로 만들어 return
