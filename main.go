@@ -1,8 +1,10 @@
 package main
 
 import (
+	"encoding/csv"
 	"log"
 	"net/http"
+	"os"
 	"std/fmt"
 	"strconv"
 	"strings"
@@ -28,9 +30,11 @@ func main() {
 	totalPages := getPages()
 	for i := 0; i < totalPages; i++ {
 		extractedJods := getPage(i)
+		// 배열을 합치려면 ...
 		jobs = append(jobs, extractedJods...)
 	}
-	fmt.Println(jobs)
+	writeJobs(jobs)
+	fmt.Println("Done, extracted", len(jobs))
 }
 
 // 페이지에 해당하는 URL을 return 하는 함수
@@ -110,5 +114,25 @@ func checkErr(err error) {
 func checkCode(res *http.Response) {
 	if res.StatusCode != 200 {
 		log.Fatalln("Request failed with Status:", res.StatusCode)
+	}
+}
+
+// 취업 정보를 csv파일로 저장
+func writeJobs(jobs []extractedJod) {
+	file, err := os.Create("jobs.csv")
+	checkErr(err)
+
+	w := csv.NewWriter(file)
+	defer w.Flush()
+
+	headers := []string{"ID", "Title", "Location", "Salary", "Summary"}
+
+	wErr := w.Write(headers)
+	checkErr(wErr)
+
+	for _, job := range jobs {
+		jobSlice := []string{"https://kr.indeed.com/viewjob?jk=" + job.id, job.title, job.location, job.salary, job.summary}
+		jwErr := w.Write(jobSlice)
+		checkErr(jwErr)
 	}
 }
