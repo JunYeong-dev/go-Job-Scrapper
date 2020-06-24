@@ -40,6 +40,7 @@ func main() {
 // 페이지에 해당하는 URL을 return 하는 함수
 func getPage(page int) []extractedJod {
 	var jobs []extractedJod
+	c := make(chan extractedJod)
 	pageURL := baseURL + "&start=" + strconv.Itoa(page*50)
 	fmt.Println("Requesting", pageURL)
 	res, err := http.Get(pageURL)
@@ -55,14 +56,19 @@ func getPage(page int) []extractedJod {
 	searchCards := doc.Find(".jobsearch-SerpJobCard")
 
 	searchCards.Each(func(i int, card *goquery.Selection) {
-		job := extracteJod(card)
-		jobs = append(jobs, job)
+		go extracteJod(card, c)
 	})
+
+	for i := 0; i < searchCards.Length(); i++ {
+		job := <-c
+		jobs = append(jobs, job)
+	}
+
 	return jobs
 }
 
 // 취업 정보 카드에서 해당하는 데이터 추출
-func extracteJod(card *goquery.Selection) extractedJod {
+func extracteJod(card *goquery.Selection, c chan<- extractedJod) {
 	// Attr - 데이터와 존재여부를 return
 	id, _ := card.Attr("data-jk")
 	// Find - 원하는 속성을 가져옴
@@ -70,7 +76,7 @@ func extracteJod(card *goquery.Selection) extractedJod {
 	location := cleanString(card.Find(".sjcl").Text())
 	salary := cleanString(card.Find(".salaryText").Text())
 	summary := cleanString(card.Find(".summary").Text())
-	return extractedJod{
+	c <- extractedJod{
 		id:       id,
 		title:    title,
 		location: location,
@@ -125,7 +131,7 @@ func writeJobs(jobs []extractedJod) {
 	w := csv.NewWriter(file)
 	defer w.Flush()
 
-	headers := []string{"ID", "Title", "Location", "Salary", "Summary"}
+	headers := []string{"Link", "Title", "Location", "Salary", "Summary"}
 
 	wErr := w.Write(headers)
 	checkErr(wErr)
