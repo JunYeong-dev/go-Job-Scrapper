@@ -27,18 +27,24 @@ var baseURL string = "https://kr.indeed.com/jobs?q=python&limit=50"
 
 func main() {
 	var jobs []extractedJod
+	c := make(chan []extractedJod)
 	totalPages := getPages()
 	for i := 0; i < totalPages; i++ {
-		extractedJods := getPage(i)
+		go getPage(i, c)
+	}
+
+	for i := 0; i < totalPages; i++ {
+		extractedJods := <-c
 		// 배열을 합치려면 ...
 		jobs = append(jobs, extractedJods...)
 	}
+
 	writeJobs(jobs)
 	fmt.Println("Done, extracted", len(jobs))
 }
 
 // 페이지에 해당하는 URL을 return 하는 함수
-func getPage(page int) []extractedJod {
+func getPage(page int, mainC chan<- []extractedJod) {
 	var jobs []extractedJod
 	c := make(chan extractedJod)
 	pageURL := baseURL + "&start=" + strconv.Itoa(page*50)
@@ -64,7 +70,7 @@ func getPage(page int) []extractedJod {
 		jobs = append(jobs, job)
 	}
 
-	return jobs
+	mainC <- jobs
 }
 
 // 취업 정보 카드에서 해당하는 데이터 추출
