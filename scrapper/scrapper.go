@@ -78,10 +78,10 @@ func extracteJod(card *goquery.Selection, c chan<- extractedJod) {
 	// Attr - 데이터와 존재여부를 return
 	id, _ := card.Attr("data-jk")
 	// Find - 원하는 속성을 가져옴
-	title := cleanString(card.Find(".title>a").Text())
-	location := cleanString(card.Find(".sjcl").Text())
-	salary := cleanString(card.Find(".salaryText").Text())
-	summary := cleanString(card.Find(".summary").Text())
+	title := CleanString(card.Find(".title>a").Text())
+	location := CleanString(card.Find(".sjcl").Text())
+	salary := CleanString(card.Find(".salaryText").Text())
+	summary := CleanString(card.Find(".summary").Text())
 	c <- extractedJod{
 		id:       id,
 		title:    title,
@@ -90,9 +90,9 @@ func extracteJod(card *goquery.Selection, c chan<- extractedJod) {
 		summary:  summary}
 }
 
-// 공백을 제거하고, 문자열의 배열로 만들어 준 후 다시 공백을 넣은 하나의 문자열로 만들어 return
+// CleanString - 공백을 제거하고, 문자열의 배열로 만들어 준 후 다시 공백을 넣은 하나의 문자열로 만들어 return
 // ex) "hello      golang      unbelievable" -> "hello", "golang", "unbelievable" -> "hello golang unbelievable"
-func cleanString(str string) string {
+func CleanString(str string) string {
 	return strings.Join(strings.Fields(strings.TrimSpace(str)), " ")
 }
 
